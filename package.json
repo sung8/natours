@@ -1,0 +1,17 @@
+{
+  "name": "natours",
+  "version": "1.0.0",
+  "description": "Learning, node, express, mongoDB",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon ./server.js"
+  },
+  "author": "sung",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1",
+    "ignore": "^5.1.8",
+    "morgan": "^1.10.0"
+  }
+}
