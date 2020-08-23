@@ -5,11 +5,13 @@
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon ./server.js"
+    "start:dev": "nodemon server.js",
+    "start:prod": "SET NODE_ENV=production & SET PORT=3000 & nodemon server.js"
   },
   "author": "sung",
   "license": "ISC",
   "dependencies": {
+    "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "ignore": "^5.1.8",
     "morgan": "^1.10.0"

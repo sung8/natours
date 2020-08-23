@@ -1,3 +1,9 @@
+// everything not related to express will be outside of the app.js file
+
+// app.js is for configuring the express application and everything that has to do with express
+
+// environment variables are outside the scope of express
+
 const fs = require('fs');
 const express = require('express');
 const { nextTick } = require('process');
@@ -11,7 +17,14 @@ const app = express();
 
 // MIDDLEWARE
 // logging
-app.use(morgan('dev'));
+// we have access to this env.var. here when we didn't really define them in this file but in server.js
+// the reading of the variables from the file to the node process only needs to happen once
+// it's then in the process and the process is the same no matter what file we're in
+// process.env is available in every single file in the project
+//console.log(process.env.NODE_ENV);
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'));
+}
 // body parser
 app.use(express.json());
 
