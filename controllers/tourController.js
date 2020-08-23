@@ -7,6 +7,11 @@ const tours = JSON.parse(
 
 // check id
 // removes the repeated code of ID check in getTour, updateTour, and deleteTour
+// this middleware is not part of our pipeline/
+// might that we can simply create a function to check ID and call it inside each of the route handlers, but that goes against the philosophy of Express
+// .... so we should always work with the middleware stack/pipeline as much as we can
+// each of the route handlers don't have to worry about checking id... it just does its job
+// also ID would be automatically checked if we add another controller that depends on id param
 
 exports.checkID = (req, res, next, val) => {
   console.log(`Tour id is: ${val}`);
