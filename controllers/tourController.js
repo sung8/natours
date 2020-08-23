@@ -5,6 +5,21 @@ const tours = JSON.parse(
   fs.readFileSync(`${__dirname}/../dev-data/data/tours-simple.json`)
 );
 
+// check id
+// removes the repeated code of ID check in getTour, updateTour, and deleteTour
+
+exports.checkID = (req, res, next, val) => {
+  console.log(`Tour id is: ${val}`);
+  if (req.params.id * 1 > tours.length) {
+    // if id is invalid, make sure to RETURN so the req-res cycle ends here and doesn't hit next()
+    return res.status(404).json({
+      status: 'fail',
+      message: 'Invalid ID',
+    });
+  }
+  next();
+};
+
 // ROUTE HANDLERS
 exports.getAllTours = (req, res) => {
   // log time of request middleware function
@@ -27,13 +42,6 @@ exports.getTour = (req, res) => {
   const id = req.params.id * 1;
 
   const tour = tours.find((el) => el.id === id);
-
-  if (!tour) {
-    return res.status(404).json({
-      status: 'fail',
-      message: 'Invalid ID',
-    });
-  }
 
   res.status(200).json({
     status: 'success',
@@ -70,13 +78,6 @@ exports.createTour = (req, res) => {
 // update tour by id
 // (not actually implemented bc we don't want to update our json data)
 exports.updateTour = (req, res) => {
-  if (req.params.id * 1 > tours.length) {
-    return res.status(404).json({
-      status: 'fail',
-      message: 'Invalid ID',
-    });
-  }
-
   res.status(200).json({
     status: 'success',
     data: {
@@ -88,13 +89,6 @@ exports.updateTour = (req, res) => {
 // delete tour
 // (not actually implemented bc we don't want to delete our json data)
 exports.deleteTour = (req, res) => {
-  if (req.params.id * 1 > tours.length) {
-    return res.status(404).json({
-      status: 'fail',
-      message: 'Invalid ID',
-    });
-  }
-
   res.status(204).json({
     status: 'success',
     data: null,

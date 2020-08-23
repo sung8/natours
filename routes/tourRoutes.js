@@ -3,6 +3,9 @@ const tourController = require('./../controllers/tourController');
 // const {getAllTours, } = require('./../controllers/tourController');
 const router = express.Router();
 
+// check ID
+router.param('id', tourController.checkID);
+
 // prettier-ignore
 router
   .route('/')
