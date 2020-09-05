@@ -97,6 +97,7 @@ exports.getTour = async (req, res) => {
 exports.createTour = async (req, res) => {
   /* 
   const newTour = new Tour({});
+  // .save() is part of PROTOTYPE object 
   newTours.save();
     instead of this we can just do ... 
   Tour.create({});
@@ -130,13 +131,41 @@ exports.createTour = async (req, res) => {
 
 // update tour by id
 // (not actually implemented bc we don't want to update our json data)
-exports.updateTour = (req, res) => {
-  res.status(200).json({
-    status: 'success',
-    data: {
-      tour: '<Updated tour here...>',
-    },
-  });
+exports.updateTour = async (req, res) => {
+  try {
+    // find by id and update
+    /*
+    arguments:
+      1. id - to first find the document to be updated
+      2. data that we actually want to change, data will be in the body just like the post request
+      3. options - 
+        - 'new' - the new updated document is the one to be returned
+        - 'runValidators' - runs the validators that we specified in the schema 
+    
+    Mongoose query methods 
+      -find, findById, findByIdAndUpdate, etc.
+      -findById and findByIdAndUpdate are mostly shorthand for multiple queries at once
+      -Model.prototype.methodName
+        - in JS, .prototype always means an object created from a class 
+        - the method will be available on all instances CREATED through that object (Model in this case). not the object class itself, but the CREATED object 
+    */
+    const tour = await Tour.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+    res.status(200).json({
+      status: 'success',
+      data: {
+        //tour: tour (don't have to write this since ES6)
+        tour,
+      },
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: 'failed',
+      message: err,
+    });
+  }
 };
 
 // delete tour
