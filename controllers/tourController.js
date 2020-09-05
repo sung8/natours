@@ -43,34 +43,53 @@ const Tour = require('./../models/tourModels');
 // };
 
 // ROUTE HANDLERS
-exports.getAllTours = (req, res) => {
-  // log time of request middleware function
-  console.log(req.requestTime);
-  res.status(200).json({
-    status: 'success',
-    // include time of request in response
-    // requestAt: req.requestTime,
-    // results: tours.length,
-    // data: {
-    //   tours,
-    // },
-  });
+exports.getAllTours = async (req, res) => {
+  try {
+    const tours = await Tour.find();
+
+    res.status(200).json({
+      status: 'success',
+      // include time of request in response
+      // requestAt: req.requestTime,
+      results: tours.length,
+      data: {
+        tours,
+      },
+    });
+  } catch (err) {
+    res.status(404).json({
+      status: 'failed',
+      message: err,
+    });
+  }
 };
 
 // get request handler for specific tour by id
-exports.getTour = (req, res) => {
-  console.log(req.params);
+exports.getTour = async (req, res) => {
+  try {
+    /*
+    Tour.findOne({ _id: req.params.id})
+      - id is _id in mongodb
+      - we can query for id field
+      - specify filter object, property that we're searching for, and the value that we want to search for
+      - findOne() method will then only return one of the documents
+    */
 
-  const id = req.params.id * 1;
+    // this shorthand for ^
+    const tour = await Tour.findById(req.params.id);
 
-  // const tour = tours.find((el) => el.id === id);
-
-  // res.status(200).json({
-  //   status: 'success',
-  //   data: {
-  //     tour,
-  //   },
-  // });
+    res.status(200).json({
+      status: 'success',
+      data: {
+        tour,
+      },
+    });
+  } catch (err) {
+    res.status(404).json({
+      status: 'failed',
+      message: err,
+    });
+  }
 };
 
 // post request handler
