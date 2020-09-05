@@ -1,9 +1,11 @@
-const fs = require('fs');
+// const fs = require('fs');
+const Tour = require('./../models/tourModels');
 
+// commented out bc just for reference
 // top-level code (only executed once)
-const tours = JSON.parse(
-  fs.readFileSync(`${__dirname}/../dev-data/data/tours-simple.json`)
-);
+// const tours = JSON.parse(
+//   fs.readFileSync(`${__dirname}/../dev-data/data/tours-simple.json`)
+// );
 
 // check id
 // removes the repeated code of ID check in getTour, updateTour, and deleteTour
@@ -12,33 +14,33 @@ const tours = JSON.parse(
 // .... so we should always work with the middleware stack/pipeline as much as we can
 // each of the route handlers don't have to worry about checking id... it just does its job
 // also ID would be automatically checked if we add another controller that depends on id param
-exports.checkID = (req, res, next, val) => {
-  console.log(`Tour id is: ${val}`);
-  if (req.params.id * 1 > tours.length) {
-    // if id is invalid, make sure to RETURN so the req-res cycle ends here and doesn't hit next()
-    return res.status(404).json({
-      status: 'fail',
-      message: 'Invalid ID',
-    });
-  }
-  next();
-};
+// exports.checkID = (req, res, next, val) => {
+//   console.log(`Tour id is: ${val}`);
+//   if (req.params.id * 1 > tours.length) {
+//     // if id is invalid, make sure to RETURN so the req-res cycle ends here and doesn't hit next()
+//     return res.status(404).json({
+//       status: 'fail',
+//       message: 'Invalid ID',
+//     });
+//   }
+//   next();
+// };
 
 // checkBody middleware
 // check if the body contains the name and price property
 // if not, send back 400 (bad request) response
 // add it to post handler stack
-exports.checkBody = (req, res, next) => {
-  //console.log(`Tour id is: ${val}`);
-  if (!req.body.name || !req.body.price) {
-    // if id is invalid, make sure to RETURN so the req-res cycle ends here and doesn't hit next()
-    return res.status(400).json({
-      status: 'fail',
-      message: 'Missing name or price',
-    });
-  }
-  next();
-};
+// exports.checkBody = (req, res, next) => {
+//   //console.log(`Tour id is: ${val}`);
+//   if (!req.body.name || !req.body.price) {
+//     // if id is invalid, make sure to RETURN so the req-res cycle ends here and doesn't hit next()
+//     return res.status(400).json({
+//       status: 'fail',
+//       message: 'Missing name or price',
+//     });
+//   }
+//   next();
+// };
 
 // ROUTE HANDLERS
 exports.getAllTours = (req, res) => {
@@ -47,11 +49,11 @@ exports.getAllTours = (req, res) => {
   res.status(200).json({
     status: 'success',
     // include time of request in response
-    requestAt: req.requestTime,
-    results: tours.length,
-    data: {
-      tours,
-    },
+    // requestAt: req.requestTime,
+    // results: tours.length,
+    // data: {
+    //   tours,
+    // },
   });
 };
 
@@ -61,38 +63,50 @@ exports.getTour = (req, res) => {
 
   const id = req.params.id * 1;
 
-  const tour = tours.find((el) => el.id === id);
+  // const tour = tours.find((el) => el.id === id);
 
-  res.status(200).json({
-    status: 'success',
-    data: {
-      tour,
-    },
-  });
+  // res.status(200).json({
+  //   status: 'success',
+  //   data: {
+  //     tour,
+  //   },
+  // });
 };
 
 // post request handler
 // create new tour
-exports.createTour = (req, res) => {
-  const newId = tours[tours.length - 1].id + 1;
+exports.createTour = async (req, res) => {
+  /* 
+  const newTour = new Tour({});
+  newTours.save();
+    instead of this we can just do ... 
+  Tour.create({});
+   ^ returns a promise... we can use .then(), but we will instead use async await
+  */
 
-  const newTour = Object.assign({ id: newId }, req.body);
+  /* we pass data that we want to store in db as a new tour into .create() function
+    - this data comes from the post body
+    -  req.body is the data that comes with the post request as an object
+    - newTour will be a new document with new ID and everything
+  */
+  try {
+    const newTour = await Tour.create(req.body);
 
-  tours.push(newTour);
+    res.status(201).json({
+      status: 'success',
+      data: {
+        tour: newTour,
+      },
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: 'failed',
+      message: 'Invalid data set',
+    });
+  }
 
-  fs.writeFile(
-    `${__dirname}/../dev-data/data/tours-simple.json`,
-    JSON.stringify(tours),
-    (err) => {
-      //status code 201 = created
-      res.status(201).json({
-        status: 'success',
-        data: {
-          tour: newTour,
-        },
-      });
-    }
-  );
+  // once we try to post through postman and check mongo compass. it will not show 'difficulty' bc it's not in our schema
+  // data not in schema will be ignored and not stored
 };
 
 // update tour by id
