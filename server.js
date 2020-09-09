@@ -5,6 +5,7 @@ const dotenv = require('dotenv');
 // must go above our app file so our app file can read config file
 dotenv.config({ path: './config.env' });
 
+const app = require('./app');
 // replace <PASSWORD> placeholder with our real password
 const DB = process.env.DATABASE.replace(
   '<PASSWORD>',
@@ -33,8 +34,6 @@ mongoose
     //console.log(con.connections);
     console.log('DB connection successful!');
   });
-
-const app = require('./app');
 
 // START THE SERVER
 const port = process.env.PORT || 3000;
