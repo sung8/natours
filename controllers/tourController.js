@@ -5,16 +5,33 @@ const { query } = require('express');
 // ROUTE HANDLERS
 exports.getAllTours = async (req, res) => {
   try {
+    console.log(req.query);
+    // BUILD QUERY
+    // 1) filtering
     // create shallow copy of req.query
     // destructuring with ...
     const queryObj = { ...req.query };
     // create an array of all the fields we want to exclude
     const excludedFields = ['page', 'sort', 'limit', 'fields'];
-    // remove all these fields by loop over the fields
+    // remove all the excludedFields fields by loop over the fields
     excludedFields.forEach((el) => delete queryObj[el]);
 
-    console.log(req.query, queryObj);
-    const query = Tour.find(queryObj);
+    //console.log(req.query, queryObj);
+
+    // 2) advanced filtering
+    let queryStr = JSON.stringify(queryObj);
+    queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
+    console.log(JSON.parse(queryStr));
+
+    // what we want
+    // { difficulty: 'easy', duration: { $gte: 5} }
+    //console.log(req.query);
+    // logs
+    // { difficulty: 'easy', duration: { gte: '5' } }
+    // goal is to place $ in front of corresponding mongodb operators (gte, gt, lte, lt)
+
+    //const query = Tour.find(queryObj);
+    const query = Tour.find(JSON.parse(queryStr));
     // const tours = await Tour.find()
     //   .where('duration')
     //   .equals(5)
