@@ -67,6 +67,8 @@ const tourSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now(),
+    // deselected sensitive data from being shown to the user
+    select: false,
   },
   startDates: [Date],
 });

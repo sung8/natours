@@ -50,6 +50,18 @@ exports.getAllTours = async (req, res) => {
       query = query.sort('-createdAt');
     }
 
+    // 3) Field limiting
+    /* for a client, it's always ideal to receive as little data as possible to reduce bandwidth that is consumed with each request. especially for data-heavy data requests.
+     */
+    if (req.query.fields) {
+      // including fields
+      const fields = req.query.fields.split(',').join(' ');
+      query = query.select(fields);
+    } else {
+      //default
+      // excluding fields... everything but '__v'
+      query = query.select('-__v');
+    }
     // EXECUTE QUERY
     const tours = await query;
     res.status(200).json({
