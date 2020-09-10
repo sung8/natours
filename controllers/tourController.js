@@ -7,7 +7,7 @@ exports.getAllTours = async (req, res) => {
   try {
     console.log(req.query);
     // BUILD QUERY
-    // 1) filtering
+    // 1) Filtering
     // create shallow copy of req.query
     // destructuring with ...
     const queryObj = { ...req.query };
@@ -16,9 +16,7 @@ exports.getAllTours = async (req, res) => {
     // remove all the excludedFields fields by loop over the fields
     excludedFields.forEach((el) => delete queryObj[el]);
 
-    //console.log(req.query, queryObj);
-
-    // 2) advanced filtering
+    // 2) Advanced Filtering
     let queryStr = JSON.stringify(queryObj);
     queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
     console.log(JSON.parse(queryStr));
@@ -31,12 +29,26 @@ exports.getAllTours = async (req, res) => {
     // goal is to place $ in front of corresponding mongodb operators (gte, gt, lte, lt)
 
     //const query = Tour.find(queryObj);
-    const query = Tour.find(JSON.parse(queryStr));
+    let query = Tour.find(JSON.parse(queryStr));
     // const tours = await Tour.find()
     //   .where('duration')
     //   .equals(5)
     //   .where('difficulty')
     //   .equals('easy');
+
+    // 2) Sorting
+    /* chain methods */
+    if (req.query.sort) {
+      const sortBy = req.query.sort.split(',').join(' ');
+      console.log(sortBy);
+      query = query.sort(sortBy);
+      // sort('price ratingsAverage')
+      //127.0.0.1:8000/api/v1/tours?sort=-price,ratingsAverage
+      // -price descending price ascending
+    } else {
+      // in case user doesn't specify, a default sort
+      query = query.sort('-createdAt');
+    }
 
     // EXECUTE QUERY
     const tours = await query;
