@@ -62,6 +62,26 @@ exports.getAllTours = async (req, res) => {
       // excluding fields... everything but '__v'
       query = query.select('-__v');
     }
+
+    // 4) Pagination
+    // ex: 1 mil total results, we don't want to show the user all 1 mil, declare default amount
+    // multiply by 1 to convert string to number
+    // default is 1
+    const page = req.query.page * 1 || 1;
+    const limit = req.query.limit * 1 || 100;
+    const skip = (page - 1) * limit;
+    //page=3&limit=10
+    // 1-10 page 1, 11-20 page 2, 21-30 page 3
+    // user should not have to deal with skip value
+    query = query.skip(skip).limit(limit);
+
+    if (req.query.page) {
+      const numTours = await Tour.countDocuments();
+      if (skip >= numTours) throw new Error('This page does not exist');
+    }
+
+    // query chain of methods to filter through
+    // query.sort().select().skip().limit()
     // EXECUTE QUERY
     const tours = await query;
     res.status(200).json({
