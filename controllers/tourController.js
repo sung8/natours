@@ -207,3 +207,71 @@ exports.getTourStats = async (req, res) => {
     });
   }
 };
+
+/* Natour's Company needs us to implement a function to calculate the busiest month of a given year
+Calculate how many tours start in each of the month of a given year 
+Company needs this function to prepare accordingly for these tours (hire tour guides, buy equipment, etc.)
+Solve this real-world business problem with aggregation pipelining
+ */
+exports.getMonthlyPlan = async (req, res) => {
+  try {
+    const year = req.params.year * 1;
+    const plan = await Tour.aggregate([
+      {
+        $unwind: '$startDates',
+      },
+      {
+        $match: {
+          startDates: {
+            // gte operator works with mongodb
+            // mongodb good at working with/comparing dates
+            $gte: new Date(`${year}-01-01`),
+            $lte: new Date(`${year}-12-31`),
+          },
+        },
+      },
+      {
+        $group: {
+          //_id identifies what we want to group our data by
+          _id: { $month: '$startDates' },
+          //count the amount of tours that have it at that month
+          numTourStarts: { $sum: 1 },
+          tours: { $push: '$name' },
+        },
+      },
+      {
+        $addFields: { month: '$_id' },
+      },
+      {
+        $project: {
+          // 0 means don't show up in response
+          // 1 means show up
+          _id: 0,
+        },
+      },
+      {
+        // 1 is ascending order, -1 is descending order
+        $sort: { numTourStarts: -1 },
+      },
+      {
+        // limits number of outputs
+        // 6 for top 6 busiest months
+        // 3 for top 3 busiest months
+        // 12 for all months
+        $limit: 12,
+      },
+    ]);
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        plan,
+      },
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: 'failed',
+      message: err,
+    });
+  }
+};
