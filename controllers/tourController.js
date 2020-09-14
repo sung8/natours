@@ -1,6 +1,7 @@
 // const fs = require('fs');
 const Tour = require('./../models/tourModel');
 const { query } = require('express');
+const APIFeatures = require('./../utils/apiFeatures');
 
 /*
 alias middleware
@@ -23,84 +24,28 @@ exports.aliasTopTours = (req, res, next) => {
 exports.getAllTours = async (req, res) => {
   try {
     console.log(req.query);
-    // BUILD QUERY
-    // 1) Filtering
-    // create shallow copy of req.query
-    // destructuring with ...
-    const queryObj = { ...req.query };
-    // create an array of all the fields we want to exclude
-    const excludedFields = ['page', 'sort', 'limit', 'fields'];
-    // remove all the excludedFields fields by loop over the fields
-    excludedFields.forEach((el) => delete queryObj[el]);
-
-    // 2) Advanced Filtering
-    let queryStr = JSON.stringify(queryObj);
-    queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
-    console.log(JSON.parse(queryStr));
-
-    // what we want
-    // { difficulty: 'easy', duration: { $gte: 5} }
-    //console.log(req.query);
-    // logs
-    // { difficulty: 'easy', duration: { gte: '5' } }
-    // goal is to place $ in front of corresponding mongodb operators (gte, gt, lte, lt)
-
-    //const query = Tour.find(queryObj);
-    let query = Tour.find(JSON.parse(queryStr));
-    // const tours = await Tour.find()
-    //   .where('duration')
-    //   .equals(5)
-    //   .where('difficulty')
-    //   .equals('easy');
-
-    // 2) Sorting
-    /* chain methods */
-    if (req.query.sort) {
-      const sortBy = req.query.sort.split(',').join(' ');
-      console.log(sortBy);
-      query = query.sort(sortBy);
-      // sort('price ratingsAverage')
-      //127.0.0.1:8000/api/v1/tours?sort=-price,ratingsAverage
-      // -price descending price ascending
-    } else {
-      // in case user doesn't specify, a default sort
-      query = query.sort('-createdAt');
-    }
-
-    // 3) Field limiting
-    /* for a client, it's always ideal to receive as little data as possible to reduce bandwidth that is consumed with each request. especially for data-heavy data requests.
-     */
-    if (req.query.fields) {
-      // including fields
-      const fields = req.query.fields.split(',').join(' ');
-      query = query.select(fields);
-    } else {
-      //default
-      // excluding fields... everything but '__v'
-      query = query.select('-__v');
-    }
-
-    // 4) Pagination
-    // ex: 1 mil total results, we don't want to show the user all 1 mil, declare default amount
-    // multiply by 1 to convert string to number
-    // default is 1
-    const page = req.query.page * 1 || 1;
-    const limit = req.query.limit * 1 || 100;
-    const skip = (page - 1) * limit;
-    //page=3&limit=10
-    // 1-10 page 1, 11-20 page 2, 21-30 page 3
-    // user should not have to deal with skip value
-    query = query.skip(skip).limit(limit);
-
-    if (req.query.page) {
-      const numTours = await Tour.countDocuments();
-      if (skip >= numTours) throw new Error('This page does not exist');
-    }
 
     // query chain of methods to filter through
     // query.sort().select().skip().limit()
+
     // EXECUTE QUERY
-    const tours = await query;
+    // make sure APIFeatures object's query functions return 'this' so we can chain the methods
+    // 'this' is the object itself which has access to each of these methods
+
+    /*
+      - we are creating a new object of the APIFeatures class
+      - in there, we are passing a query object and the query string that's coming from Express
+      - using each of the four methods, we manipulate the query  
+      - by the end, we await the result of the query so that it can come back with all the selected documents
+      - the query is stored inside 'features' object
+    */
+    const features = new APIFeatures(Tour.find(), req.query)
+      .filter()
+      .sort()
+      .limitFields()
+      .paginate();
+
+    const tours = await features.query;
     res.status(200).json({
       status: 'success',
       // include time of request in response
@@ -149,15 +94,6 @@ exports.getTour = async (req, res) => {
 // post request handler
 // create new tour
 exports.createTour = async (req, res) => {
-  /* 
-  const newTour = new Tour({});
-  // .save() is part of PROTOTYPE object 
-  newTours.save();
-    instead of this we can just do ... 
-  Tour.create({});
-   ^ returns a promise... we can use .then(), but we will instead use async await
-  */
-
   /* we pass data that we want to store in db as a new tour into .create() function
     - this data comes from the post body
     -  req.body is the data that comes with the post request as an object
@@ -188,21 +124,6 @@ exports.createTour = async (req, res) => {
 exports.updateTour = async (req, res) => {
   try {
     // find by id and update
-    /*
-    arguments:
-      1. id - to first find the document to be updated
-      2. data that we actually want to change, data will be in the body just like the post request
-      3. options - 
-        - 'new' - the new updated document is the one to be returned
-        - 'runValidators' - runs the validators that we specified in the schema 
-    
-    Mongoose query methods 
-      -find, findById, findByIdAndUpdate, etc.
-      -findById and findByIdAndUpdate are mostly shorthand for multiple queries at once
-      -Model.prototype.methodName
-        - in JS, .prototype always means an object created from a class 
-        - the method will be available on all instances CREATED through that object (Model in this case). not the object class itself, but the CREATED object 
-    */
     const tour = await Tour.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
@@ -228,8 +149,6 @@ exports.deleteTour = async (req, res) => {
   try {
     await Tour.findByIdAndDelete(req.params.id);
 
-    // no need to store it in a variable
-    // in RESTful api, it is common practice to not send back any data to the client when there's a delete operation
     res.status(204).json({
       status: 'success',
       data: null,
