@@ -2,6 +2,23 @@
 const Tour = require('./../models/tourModel');
 const { query } = require('express');
 
+/*
+alias middleware
+for a request that is done frequently
+pre-fill some fields in the query string
+  Solution: run a middleware function before we run the getAllTours handler
+    - the middleware function will manipulate the query object that's coming in 
+*/
+exports.aliasTopTours = (req, res, next) => {
+  req.query.limit = '5';
+  req.query.sort = '-ratingsAverage,price';
+  req.query.fields = 'name,price,ratingsAverage,summary,difficulty';
+  next();
+};
+// we are prefilling the query string so that the user doesn't have to manually do it
+// in postman:
+// 127.0.0.1:8000/api/v1/tours/top-5-cheap
+
 // ROUTE HANDLERS
 exports.getAllTours = async (req, res) => {
   try {
