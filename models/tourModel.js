@@ -6,6 +6,8 @@ const mongoose = require('mongoose');
 //   price: Number,
 // });
 
+const slugify = require('slugify');
+
 // basic schema
 // specifies schema for our data
 //  - descriptions and validation
@@ -20,6 +22,7 @@ const tourSchema = new mongoose.Schema(
       unique: true,
       trim: true,
     },
+    slug: String,
     duration: {
       type: Number,
       required: [true, 'A tour must have a duration'],
@@ -104,6 +107,47 @@ tourSchema.virtual('durationWeeks').get(function () {
 */
 // basic model
 // convention is to uppercase model names and variables
+
+// DOCUMENT MIDDLEWARE
+// runs before .save() and .create() command
+// doesn't run on .insertMany()
+tourSchema.pre('save', function (next) {
+  // 'this' points to currently processed middleware
+  console.log(this);
+  // in order to trigger this function, we need to run a .save() or .create() command
+  // we must create a new tour using our API to trigger this middleware
+
+  //create a slug for each of these documents
+  this.slug = slugify(this.name, { lower: true });
+  // next to call next middleware in stack
+  next();
+});
+
+// tourSchema.pre('save', function (next) {
+//   console.log('Will save document...');
+//   next();
+// });
+
+// tourSchema.post('save', function (doc, next) {
+//   console.log(doc);
+//   next();
+// });
 const Tour = mongoose.model('Tour', tourSchema);
 
 module.exports = Tour;
+
+/*
+Mongoose Middleware
+- to make something happen between two events
+- for example, each time a new document is saved to the db, we can run a function between the save command is issued and the actual saving of the document
+  - or after the actual saving
+- Mongoose middleware is also called pre and post hooks (bc we can create function to run before or after a certain event)
+
+Four types:
+ - document middleware - middleware that can act on the currently processed document 
+ - query middleware
+ - aggregate middleware
+ - model middleware
+
+Just like virtual properties, we define middleware in the schema
+*/
